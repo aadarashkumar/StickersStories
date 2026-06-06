@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     <style>
+      /* Force the browser body to stay completely full screen with NO scrolling */
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+      
       .btn-overlay { position: fixed; top: 20px; left: 20px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-family: sans-serif; }
       .start-btn { background: #FFDF00; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+      
+      /* Crucial: Forces MindAR's camera feed element to stretch fully */
+      .mindar-ui-overlay { z-index: 999; }
     </style>
   </head>
 
-  <body style="margin: 0px; overflow: hidden;">
+  <body>
     <div class="btn-overlay">
       <div id="status">1. Tap to Start:</div>
       <button onclick="armSystem()" class="start-btn">ACTIVATE CAMERA 🔊</button>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+             embedded 
+             color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <video id="bhaw-vid" src="bhaw.mp4" loop="true" playsinline crossorigin="anonymous" webkit-playsinline></video>
+        <video id="bhaw-vid" src="bhaw.mp4" loop="true" playsinline crossorigin="anonymous" webkit-playsinline width="640" height="360"></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -34,33 +45,34 @@
       const statusText = document.getElementById('status');
       const sceneEl = document.querySelector('a-scene');
 
-      // Make sure video is absolutely paused on initial layout load
+      // Keep video perfectly quiet during initial loading phase
       video.pause();
 
       function armSystem() {
-        // Unlocks mobile media restrictions cleanly
+        // Human interaction trigger unlocks iOS/Android media restrictions
         video.play().then(() => { 
           video.pause(); 
           statusText.innerText = "2. Camera Active! Scan Sticker.";
           statusText.style.color = "#00ff00";
           
-          // This forces the physical camera hardware to open up and stream
+          // Engage camera stream hardware link
           sceneEl.systems["mindar-image-system"].start();
         }).catch(err => {
-          console.log("Camera engine startup blocked:", err);
+          console.log("Media framework failure:", err);
         });
       }
 
-      // Strict tracking event listeners
       const targetEntity = document.getElementById('sticker-target');
       
       targetEntity.addEventListener("targetFound", event => {
         statusText.innerText = "STICKER MATCHED! 🎉";
-        video.play();
+        statusText.style.color = "#00ff00";
+        video.play().catch(e => console.log("Playback error:", e));
       });
 
       targetEntity.addEventListener("targetLost", event => {
         statusText.innerText = "Scanning for Sticker...";
+        statusText.style.color = "#ffdf00";
         video.pause();
       });
     </script>
