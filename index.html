@@ -6,7 +6,6 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
-      /* Force every single possible parent container to be true 100% fullscreen */
       html, body, a-scene { 
         margin: 0 !important; 
         padding: 0 !important; 
@@ -18,7 +17,6 @@
         left: 0 !important;
       }
       
-      /* Force A-Frame's internal rendering engine canvas to stretch edge-to-edge */
       canvas.a-canvas {
         width: 100% !important;
         height: 100% !important;
@@ -60,7 +58,7 @@
       <button onclick="armSystem()" class="start-btn">ACTIVATE CAMERA 🔊</button>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no; filterMinCF: 0.001; filterBeta: 1000;" 
              embedded 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
@@ -81,17 +79,13 @@
       const statusText = document.getElementById('status');
       const sceneEl = document.querySelector('a-scene');
 
-      // Standby state
       video.pause();
 
       function armSystem() {
-        // Unlock browser audio matrix
         video.play().then(() => { 
           video.pause(); 
           statusText.innerText = "2. Scanner Active! Scan Sticker.";
           statusText.style.color = "#00ff00";
-          
-          // Fire up camera background feed
           sceneEl.systems["mindar-image-system"].start();
         }).catch(err => {
           console.log("Hardware activation failed:", err);
