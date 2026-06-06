@@ -6,18 +6,23 @@
   </head>
 
   <body style="margin: 0px; overflow: hidden;">
-    <div style="position: fixed; top: 10px; left: 10px; z-index: 999; background: white; padding: 10px; border-radius: 5px; font-family: sans-serif;">
-      <p style="margin: 0 0 10px 0; font-size: 12px;">AR Ready! Tap below to activate audio:</p>
-      <button onclick="startAudio()" style="background: #FFDF00; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer;">ENABLE SOUND 🔊</button>
+    <div style="position: fixed; top: 15px; left: 15px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-family: sans-serif;">
+      <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">Step 1: Tap to arm sound</p>
+      <button onclick="startAudio()" style="background: #FFDF00; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%;">ACTIVATE AUDIO 🔊</button>
+      <p id="debug-status" style="margin: 10px 0 0 0; font-size: 11px; color: #ffdf00; text-align: center;">Status: Waiting for scan...</p>
     </div>
 
     <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
       <a-assets>
-        <video id="bhaw-vid" src="bhaw.mp4" loop="true" playsinline crossorigin="anonymous"></video>
+        <video id="bhaw-vid" src="bhaw.mp4" loop="true" playsinline crossorigin="anonymous" webkit-playsinline></video>
       </a-assets>
 
       <a-nft id="marker-bhaw" type="nft" url="bhaw" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
-        <a-video src="#bhaw-vid" width="150" height="150" position="0 0 0" rotation="-90 0 0"></a-video>
+        
+        <a-box position="0 0 0" rotation="-90 0 0" width="100" height="100" depth="2" material="color: red; opacity: 0.4; transparent: true;"></a-box>
+        
+        <a-video src="#bhaw-vid" width="100" height="100" position="0 1 0" rotation="-90 0 0"></a-video>
+
       </a-nft>
 
       <a-entity camera></a-entity>
@@ -25,16 +30,32 @@
 
     <script>
       const video = document.getElementById('bhaw-vid');
+      const debugStatus = document.getElementById('debug-status');
       
-      // Unlocks the audio tracking instantly on tap
       function startAudio() {
-        video.play().then(() => { video.pause(); });
+        video.play().then(() => { 
+          video.pause(); 
+          debugStatus.innerText = "Status: Audio Armed! Scan Sticker Now.";
+          debugStatus.style.color = "#00ff00";
+        }).catch(err => {
+          debugStatus.innerText = "Status: Error arming audio.";
+          console.error(err);
+        });
       }
 
-      // Tracking hooks
       const marker = document.getElementById('marker-bhaw');
-      marker.addEventListener('markerFound', () => { video.play(); });
-      marker.addEventListener('markerLost', () => { video.pause(); });
+      
+      marker.addEventListener('markerFound', () => { 
+        debugStatus.innerText = "Status: STICKER FOUND! 🎉";
+        debugStatus.style.color = "#00ff00";
+        video.play().catch(e => console.log("Playback blocked:", e)); 
+      });
+      
+      marker.addEventListener('markerLost', () => { 
+        debugStatus.innerText = "Status: Sticker Lost. Rescanning...";
+        debugStatus.style.color = "#ff3333";
+        video.pause(); 
+      });
     </script>
   </body>
 </html>
