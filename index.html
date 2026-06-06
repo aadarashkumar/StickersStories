@@ -22,10 +22,12 @@
 
     <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
       <a-assets>
-        <video id="sticker1-vid" src="animation.mp4" loop="true" playsinline crossorigin="anonymous"></video>
+        <!-- YOUR VIDEO POOL (Matches your exact video file) -->
+        <video id="sticker1-vid" src="Sticker_1_Bhaw Bhaw.mp4" loop="true" playsinline crossorigin="anonymous"></video>
       </a-assets>
 
-      <a-nft id="marker-sticker1" type="nft" url="sticker-art" smooth="true" smoothCount="10">
+      <!-- YOUR TARGET POOL (Matches your exact NFT tracking prefix) -->
+      <a-nft id="marker-sticker1" type="nft" url="Sticker_1_Bhaw Bhaw" smooth="true" smoothCount="10">
         <a-video src="#sticker1-vid" width="150" height="150" position="0 0 0" rotation="-90 0 0"></a-video>
       </a-nft>
 
