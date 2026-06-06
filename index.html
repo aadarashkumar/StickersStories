@@ -1,60 +1,57 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://mind-ar.com/assets/mindar/mindar-image-aframe.prod.js"></script>
+    <style>
+      .btn-overlay { position: fixed; top: 20px; left: 20px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-family: sans-serif; }
+      .start-btn { background: #FFDF00; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+    </style>
   </head>
 
   <body style="margin: 0px; overflow: hidden;">
-    <div style="position: fixed; top: 15px; left: 15px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-family: sans-serif;">
-      <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">Step 1: Tap to arm sound</p>
-      <button onclick="startAudio()" style="background: #FFDF00; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%;">ACTIVATE AUDIO 🔊</button>
-      <p id="debug-status" style="margin: 10px 0 0 0; font-size: 11px; color: #ffdf00; text-align: center;">Status: Waiting for scan...</p>
+    <div class="btn-overlay">
+      <div id="status">1. Tap to Arm System:</div>
+      <button onclick="armAudio()" class="start-btn">ACTIVATE CAMERA 🔊</button>
     </div>
 
-    <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-assets>
         <video id="bhaw-vid" src="bhaw.mp4" loop="true" playsinline crossorigin="anonymous" webkit-playsinline></video>
       </a-assets>
 
-      <a-nft id="marker-bhaw" type="nft" url="bhaw" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
-        
-        <a-box position="0 0 0" rotation="-90 0 0" width="100" height="100" depth="2" material="color: red; opacity: 0.4; transparent: true;"></a-box>
-        
-        <a-video src="#bhaw-vid" width="100" height="100" position="0 1 0" rotation="-90 0 0"></a-video>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      </a-nft>
-
-      <a-entity camera></a-entity>
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-video src="#bhaw-vid" width="1" height="1" position="0 0 0" rotation="0 0 0"></a-video>
+      </a-entity>
     </a-scene>
 
     <script>
       const video = document.getElementById('bhaw-vid');
-      const debugStatus = document.getElementById('debug-status');
-      
-      function startAudio() {
+      const statusText = document.getElementById('status');
+      const sceneEl = document.querySelector('a-scene');
+
+      function armAudio() {
+        // Unlocks mobile browser media elements
         video.play().then(() => { 
           video.pause(); 
-          debugStatus.innerText = "Status: Audio Armed! Scan Sticker Now.";
-          debugStatus.style.color = "#00ff00";
-        }).catch(err => {
-          debugStatus.innerText = "Status: Error arming audio.";
-          console.error(err);
+          statusText.innerText = "2. Scanner Active! Point at Sticker.";
+          statusText.style.color = "#00ff00";
+          // Boots up the tracking engine and camera stream
+          sceneEl.systems["mindar-image-system"].start();
         });
       }
 
-      const marker = document.getElementById('marker-bhaw');
-      
-      marker.addEventListener('markerFound', () => { 
-        debugStatus.innerText = "Status: STICKER FOUND! 🎉";
-        debugStatus.style.color = "#00ff00";
-        video.play().catch(e => console.log("Playback blocked:", e)); 
+      const targetEntity = document.querySelector('[mindar-image-target]');
+      targetEntity.addEventListener("targetFound", event => {
+        statusText.innerText = "STICKER MATCHED! 🎉";
+        video.play();
       });
-      
-      marker.addEventListener('markerLost', () => { 
-        debugStatus.innerText = "Status: Sticker Lost. Rescanning...";
-        debugStatus.style.color = "#ff3333";
-        video.pause(); 
+
+      targetEntity.addEventListener("targetLost", event => {
+        statusText.innerText = "Scanning for Sticker...";
+        video.pause();
       });
     </script>
   </body>
