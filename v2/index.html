@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Universal Brand Scanner Sandbox v2</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        /* A sleek, minimal scanner overlay that looks like an app, not an instruction manual */
+        #scanner-overlay {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+            border: 4px solid #000; box-sizing: border-box; pointer-events: none; z-index: 10;
+            transition: border-color 0.3s;
+        }
+        .scanning { border-color: rgba(255, 165, 0, 0.5) !important; } /* Cool branding accent */
+    </style>
+</head>
+<body>
 
+    <div id="scanner-overlay" class="scanning"></div>
+
+    <a-scene mindar-image="imageTargetSrc: ./v2-target.mind; autoStart: true; uiLoading: no; uiError: no; uiScanning: no;" 
+             color-space="sRGB" 
+             renderer="colorManagement: true, sortObjects: true" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
+        
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            </a-entity>
+    </a-scene>
+
+    <script>
+        // Future sandbox scripts for handling asset playback, audio state, and dynamic loading go here
+        console.log("Sandbox V2 Framework Active and Protected.");
+    </script>
+</body>
+</html>
