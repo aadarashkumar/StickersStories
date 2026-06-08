@@ -7,18 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
-        /* A sleek, minimal scanner overlay that looks like an app, not an instruction manual */
-        #scanner-overlay {
-            position: absolute; width: 100%; height: 100%; top: 0; left: 0;
-            border: 4px solid #000; box-sizing: border-box; pointer-events: none; z-index: 10;
-            transition: border-color 0.3s;
+        /* Tap to Play overlay button since mobile browsers block auto-playing audio */
+        #play-overlay {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); color: white; padding: 12px 24px;
+            font-family: sans-serif; font-weight: bold; border-radius: 30px;
+            z-index: 100; cursor: pointer; display: none; border: 2px solid white;
         }
-        .scanning { border-color: rgba(255, 165, 0, 0.5) !important; } /* Cool branding accent */
     </style>
 </head>
 <body>
 
-    <div id="scanner-overlay" class="scanning"></div>
+    <div id="play-overlay">TAP TO UNMUTE AUDIO</div>
 
     <a-scene mindar-image="imageTargetSrc: ./v2-target.mind; autoStart: true; uiLoading: no; uiError: no; uiScanning: no;" 
              color-space="sRGB" 
@@ -26,15 +26,45 @@
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
         
+        <a-assets>
+            <video id="sandbox-video" src="../bhaw.mp4" preload="auto" loop="true" playsinline webkit-playsinline></video>
+        </a-assets>
+
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity mindar-image-target="targetIndex: 0">
-            </a-entity>
+        <a-entity id="target-anchor" mindar-image-target="targetIndex: 0">
+            <a-video src="#sandbox-video" position="0 0 0" height="1" width="1" rotation="0 0 0"></a-video>
+        </a-entity>
     </a-scene>
 
     <script>
-        // Future sandbox scripts for handling asset playback, audio state, and dynamic loading go here
-        console.log("Sandbox V2 Framework Active and Protected.");
+        const video = document.querySelector('#sandbox-video');
+        const anchor = document.querySelector('#target-anchor');
+        const overlay = document.querySelector('#play-overlay');
+
+        // When the camera spots the flower stamp, play the video
+        anchor.addEventListener("targetFound", event => {
+            console.log("Flower Stamp Detected!");
+            video.play();
+            // Show overlay if video is playing muted due to browser restrictions
+            if (video.muted || video.paused) {
+                overlay.style.display = "block";
+            }
+        });
+
+        // When the camera loses sight of the stamp, pause the video to save phone battery
+        anchor.addEventListener("targetLost", event => {
+            console.log("Target Lost");
+            video.pause();
+            overlay.style.display = "none";
+        });
+
+        // Let user easily unmute audio with a simple screen tap
+        overlay.addEventListener("click", () => {
+            video.muted = false;
+            video.play();
+            overlay.style.display = "none";
+        });
     </script>
 </body>
 </html>
