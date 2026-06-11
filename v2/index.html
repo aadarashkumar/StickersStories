@@ -13,12 +13,19 @@
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
+    /* Ultra-lightweight Static Landing Screen UI Layer */
     #premium-landing-view {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
-    }
-
-    #bg-video-loop {
-      width: 100%; height: 100%; object-fit: cover; object-position: center; position: absolute; top: 0; left: 0; z-index: 1;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100dvh; 
+      overflow: hidden; 
+      z-index: 99999;
+      
+      /* Links to your brand new static background file */
+      background: url('bg-home.png') no-repeat center center;
+      background-size: cover;
     }
 
     #interactive-overlay-plane {
@@ -26,6 +33,7 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
     }
 
+    /* The Beautiful Button Style */
     #start-camera-btn {
       background: url('btn-bubble.png') no-repeat center !important;
       background-size: contain !important;
@@ -39,6 +47,8 @@
       background-color: transparent !important;
       outline: none !important;
       -webkit-tap-highlight-color: transparent;
+      
+      /* Blocks out default HTML styling text */
       color: transparent !important;
       font-size: 0px !important;
     }
@@ -51,9 +61,6 @@
 <body>
 
   <div id="premium-landing-view">
-    <video id="bg-video-loop" autoplay loop muted playsinline>
-      <source src="group1-main.mp4" type="video/mp4">
-    </video>
     <div id="interactive-overlay-plane">
       <button id="start-camera-btn"></button>
     </div>
@@ -73,37 +80,23 @@
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById('start-camera-btn');
       const landingScreen = document.getElementById('premium-landing-view');
-      const loopVideo = document.getElementById('bg-video-loop');
-
-      loopVideo.loop = true;
-
-      const engageAudioSystem = () => {
-        loopVideo.muted = false;
-        loopVideo.play().catch(err => console.log("Audio waiting...", err));
-        document.removeEventListener('click', engageAudioSystem);
-        document.removeEventListener('touchstart', engageAudioSystem);
-      };
-      document.addEventListener('click', engageAudioSystem);
-      document.addEventListener('touchstart', engageAudioSystem);
 
       startBtn.addEventListener('click', async (event) => {
         event.stopPropagation();
         event.preventDefault();
 
-        // STEP 1: STOP AND COMPLETELY REMOVE THE VIDEO ELEMENT TO FREE DEVICE RAM
-        loopVideo.pause();
-        loopVideo.src = "";
-        loopVideo.load();
-        landingScreen.remove(); // Deletes the entire overlay layout from existence
+        // STEP A: Obliterate the landing screen from memory so there's zero processing lag
+        landingScreen.remove();
 
-        // STEP 2: NOW THAT RAM IS 100% FREE, START THE CAMERA HARDWARE
+        // STEP B: Fire up the camera lens on 100% free system resources
         const productionScene = document.querySelector('a-scene');
         if (productionScene && productionScene.systems['mindar-image-system']) {
           try {
+            // Secure direct browser video streaming hardware check
             await navigator.mediaDevices.getUserMedia({ video: true });
             productionScene.systems['mindar-image-system'].start();
           } catch (err) {
-            console.error("Camera prompt fallback:", err);
+            console.error("Camera permissions handling fallback:", err);
             productionScene.systems['mindar-image-system'].start();
           }
         }
