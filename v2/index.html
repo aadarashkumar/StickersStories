@@ -6,13 +6,14 @@
   <title>Sticker Time AR</title>
 
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     body, html {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
+    /* Core Landing Screen Setup */
     #premium-landing-view {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
       transition: opacity 0.4s ease, visibility 0.4s ease;
@@ -48,6 +49,7 @@
       transform: scale(0.95);
     }
 
+    /* Slick fade transition away */
     #premium-landing-view.hide-me {
       opacity: 0 !important;
       visibility: hidden !important;
@@ -58,4 +60,62 @@
 <body>
 
   <div id="premium-landing-view">
-    <video id="bg-video-loop
+    <video id="bg-video-loop" autoplay loop muted playsinline>
+      <source src="group1-main.mp4" type="video/mp4">
+    </video>
+    <div id="interactive-overlay-plane">
+      <button id="start-camera-btn"></button>
+    </div>
+  </div>
+
+  <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: false;" 
+           color-space="sRGB" 
+           renderer="colorManagement: true, physicallyCorrectLights" 
+           vr-mode-ui="enabled: false" 
+           device-orientation-permission-ui="enabled: false">
+    
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+  </a-scene>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const startBtn = document.getElementById('start-camera-btn');
+      const landingScreen = document.getElementById('premium-landing-view');
+      const loopVideo = document.getElementById('bg-video-loop');
+
+      loopVideo.loop = true;
+
+      // Handle audio activation on first user interaction
+      const engageAudioSystem = () => {
+        loopVideo.muted = false;
+        loopVideo.play().catch(err => console.log("Audio activation bypassed:", err));
+        document.removeEventListener('click', engageAudioSystem);
+        document.removeEventListener('touchstart', engageAudioSystem);
+      };
+      document.addEventListener('click', engageAudioSystem);
+      document.addEventListener('touchstart', engageAudioSystem);
+
+      // Simple, Native MindAR startup hook sequence
+      startBtn.addEventListener('click', () => {
+        // Drop the visual layer overlay immediately so user feels instant click response
+        landingScreen.classList.add('hide-me');
+
+        // Locate the AR Scene element
+        const sceneEl = document.querySelector('a-scene');
+        
+        // Native framework command to force feed camera lens online instantly
+        if (sceneEl && sceneEl.systems['mindar-image-system']) {
+          sceneEl.systems['mindar-image-system'].start();
+        }
+
+        // Freeze your AE loop video in the background to save smartphone battery power
+        setTimeout(() => {
+          loopVideo.pause();
+        }, 500);
+      });
+    });
+  </script>
+
+</body>
+</html>
