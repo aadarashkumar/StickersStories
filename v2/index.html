@@ -13,10 +13,16 @@
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
-    /* Core Landing Screen Setup */
+    /* Core UI Overlay Canvas Wrapper */
     #premium-landing-view {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100dvh; 
+      overflow: hidden; 
+      z-index: 99999; /* Higher than AR canvas - keeps camera hidden at start */
+      transition: opacity 0.5s ease, visibility 0.5s ease;
     }
 
     #bg-video-loop {
@@ -28,6 +34,7 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
     }
 
+    /* The Beautiful Button Style */
     #start-camera-btn {
       background: url('btn-bubble.png') no-repeat center !important;
       background-size: contain !important;
@@ -41,6 +48,8 @@
       background-color: transparent !important;
       outline: none !important;
       -webkit-tap-highlight-color: transparent;
+      
+      /* Strictly blocks any HTML text overlay rendering */
       color: transparent !important;
       font-size: 0px !important;
     }
@@ -49,7 +58,7 @@
       transform: scale(0.95);
     }
 
-    /* Slick fade transition away */
+    /* Seamlessly drops the screen when button is pressed */
     #premium-landing-view.hide-me {
       opacity: 0 !important;
       visibility: hidden !important;
@@ -68,7 +77,7 @@
     </div>
   </div>
 
-  <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: false;" 
+  <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: true; uiLoading: no; uiError: no;" 
            color-space="sRGB" 
            renderer="colorManagement: true, physicallyCorrectLights" 
            vr-mode-ui="enabled: false" 
@@ -86,30 +95,25 @@
 
       loopVideo.loop = true;
 
-      // Handle audio activation on first user interaction
+      // Handle custom audio activation on user interaction
       const engageAudioSystem = () => {
         loopVideo.muted = false;
-        loopVideo.play().catch(err => console.log("Audio activation bypassed:", err));
+        loopVideo.play().catch(err => console.log("Audio ready:", err));
         document.removeEventListener('click', engageAudioSystem);
         document.removeEventListener('touchstart', engageAudioSystem);
       };
       document.addEventListener('click', engageAudioSystem);
       document.addEventListener('touchstart', engageAudioSystem);
 
-      // Simple, Native MindAR startup hook sequence
-      startBtn.addEventListener('click', () => {
-        // Drop the visual layer overlay immediately so user feels instant click response
+      // Simple click handler to dismiss the UI overlay
+      startBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+
+        // Reveal the live camera view running smoothly underneath!
         landingScreen.classList.add('hide-me');
 
-        // Locate the AR Scene element
-        const sceneEl = document.querySelector('a-scene');
-        
-        // Native framework command to force feed camera lens online instantly
-        if (sceneEl && sceneEl.systems['mindar-image-system']) {
-          sceneEl.systems['mindar-image-system'].start();
-        }
-
-        // Freeze your AE loop video in the background to save smartphone battery power
+        // Stop the background assets to save resources
         setTimeout(() => {
           loopVideo.pause();
         }, 500);
