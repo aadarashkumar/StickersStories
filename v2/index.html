@@ -5,18 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sticker Time AR</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     body, html {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
-      font-family: Arial, sans-serif;
     }
 
-    /* Landing Screen Interface Overlays */
     #premium-landing-view {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
     }
 
     #bg-video-loop {
@@ -41,19 +39,12 @@
       background-color: transparent !important;
       outline: none !important;
       -webkit-tap-highlight-color: transparent;
+      color: transparent !important;
+      font-size: 0px !important;
     }
 
     #start-camera-btn:active {
       transform: scale(0.95);
-    }
-
-    #premium-landing-view.hide-me {
-      opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
-    }
-
-    /* Container holding your active camera feed */
-    #camera-viewport-container {
-      width: 100vw; height: 100dvh; position: absolute; top: 0; left: 0; z-index: 10;
     }
   </style>
 </head>
@@ -68,18 +59,24 @@
     </div>
   </div>
 
-  <div id="camera-viewport-container"></div>
+  <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: false;" 
+           color-space="sRGB" 
+           renderer="colorManagement: true, physicallyCorrectLights" 
+           vr-mode-ui="enabled: false" 
+           device-orientation-permission-ui="enabled: false">
+    
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+  </a-scene>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById('start-camera-btn');
       const landingScreen = document.getElementById('premium-landing-view');
       const loopVideo = document.getElementById('bg-video-loop');
-      const container = document.getElementById('camera-viewport-container');
 
       loopVideo.loop = true;
 
-      // Handle custom audio activation on tap gesture
       const engageAudioSystem = () => {
         loopVideo.muted = false;
         loopVideo.play().catch(err => console.log("Audio waiting...", err));
@@ -89,30 +86,26 @@
       document.addEventListener('click', engageAudioSystem);
       document.addEventListener('touchstart', engageAudioSystem);
 
-      // Button setup to initialize standard camera capture directly
       startBtn.addEventListener('click', async (event) => {
         event.stopPropagation();
         event.preventDefault();
 
-        // 1. Hide the video loop instantly 
-        landingScreen.classList.add('hide-me');
-        setTimeout(() => { loopVideo.pause(); }, 500);
+        // STEP 1: STOP AND COMPLETELY REMOVE THE VIDEO ELEMENT TO FREE DEVICE RAM
+        loopVideo.pause();
+        loopVideo.src = "";
+        loopVideo.load();
+        landingScreen.remove(); // Deletes the entire overlay layout from existence
 
-        // 2. Initialize the native standalone MindAR controller
-        const mindarThree = new window.MINDAR.IMAGE.MindARImage({
-          container: container,
-          imageTargetSrc: 'v2-target.mind',
-          uiLoading: "no",
-          uiError: "no"
-        });
-
-        // 3. Force the native device lens open completely bypassing 3D frames
-        try {
-          await mindarThree.start();
-          console.log("Camera engine loaded successfully!");
-        } catch (err) {
-          console.error("Camera access failed:", err);
-          alert("Please check your browser settings and allow camera permissions!");
+        // STEP 2: NOW THAT RAM IS 100% FREE, START THE CAMERA HARDWARE
+        const productionScene = document.querySelector('a-scene');
+        if (productionScene && productionScene.systems['mindar-image-system']) {
+          try {
+            await navigator.mediaDevices.getUserMedia({ video: true });
+            productionScene.systems['mindar-image-system'].start();
+          } catch (err) {
+            console.error("Camera prompt fallback:", err);
+            productionScene.systems['mindar-image-system'].start();
+          }
         }
       });
     });
