@@ -13,16 +13,9 @@
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
-    /* Core UI Overlay Canvas Wrapper */
+    /* Core UI Landing Screen Layout */
     #premium-landing-view {
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100vw; 
-      height: 100dvh; 
-      overflow: hidden; 
-      z-index: 99999; /* Higher than AR canvas - keeps camera hidden at start */
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
     }
 
     #bg-video-loop {
@@ -34,7 +27,6 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
     }
 
-    /* The Beautiful Button Style */
     #start-camera-btn {
       background: url('btn-bubble.png') no-repeat center !important;
       background-size: contain !important;
@@ -48,8 +40,6 @@
       background-color: transparent !important;
       outline: none !important;
       -webkit-tap-highlight-color: transparent;
-      
-      /* Strictly blocks any HTML text overlay rendering */
       color: transparent !important;
       font-size: 0px !important;
     }
@@ -58,11 +48,9 @@
       transform: scale(0.95);
     }
 
-    /* Seamlessly drops the screen when button is pressed */
-    #premium-landing-view.hide-me {
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
+    /* Target Container for dynamically generated AR Camera */
+    #ar-container {
+      width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10;
     }
   </style>
 </head>
@@ -77,25 +65,18 @@
     </div>
   </div>
 
-  <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: true; uiLoading: no; uiError: no;" 
-           color-space="sRGB" 
-           renderer="colorManagement: true, physicallyCorrectLights" 
-           vr-mode-ui="enabled: false" 
-           device-orientation-permission-ui="enabled: false">
-    
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
-  </a-scene>
+  <div id="ar-container"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById('start-camera-btn');
       const landingScreen = document.getElementById('premium-landing-view');
       const loopVideo = document.getElementById('bg-video-loop');
+      const arContainer = document.getElementById('ar-container');
 
       loopVideo.loop = true;
 
-      // Handle custom audio activation on user interaction
+      // Handle custom audio activation on user touch interaction
       const engageAudioSystem = () => {
         loopVideo.muted = false;
         loopVideo.play().catch(err => console.log("Audio ready:", err));
@@ -105,18 +86,26 @@
       document.addEventListener('click', engageAudioSystem);
       document.addEventListener('touchstart', engageAudioSystem);
 
-      // Simple click handler to dismiss the UI overlay
+      // Triggered cleanly only when user intends to open camera hardware
       startBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         event.preventDefault();
 
-        // Reveal the live camera view running smoothly underneath!
-        landingScreen.classList.add('hide-me');
+        // Step A: Stop background looping media asset and destroy the landing page layout completely
+        loopVideo.pause();
+        landingScreen.remove(); 
 
-        // Stop the background assets to save resources
-        setTimeout(() => {
-          loopVideo.pause();
-        }, 500);
+        // Step B: Inject a completely fresh, unconflicted AR Canvas element into the page setup
+        arContainer.innerHTML = `
+          <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: true; uiLoading: no; uiError: no;" 
+                   color-space="sRGB" 
+                   renderer="colorManagement: true, physicallyCorrectLights" 
+                   vr-mode-ui="enabled: false" 
+                   device-orientation-permission-ui="enabled: false">
+            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+            <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+          </a-scene>
+        `;
       });
     });
   </script>
