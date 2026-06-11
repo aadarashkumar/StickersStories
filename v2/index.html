@@ -13,9 +13,16 @@
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
-    /* Core UI Landing Screen Layout */
+    /* Fixed Landing Screen UI Layer Layout */
     #premium-landing-view {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100dvh; 
+      overflow: hidden; 
+      z-index: 99999; /* Higher than AR scene to cover the camera feed initially */
+      transition: opacity 0.4s ease, visibility 0.4s ease;
     }
 
     #bg-video-loop {
@@ -48,9 +55,11 @@
       transform: scale(0.95);
     }
 
-    /* Target Container for dynamically generated AR Camera */
-    #ar-container {
-      width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10;
+    /* Seamlessly drops out landing layer */
+    #premium-landing-view.hide-me {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
   </style>
 </head>
@@ -65,18 +74,25 @@
     </div>
   </div>
 
-  <div id="ar-container"></div>
+  <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: true; uiLoading: no; uiError: no;" 
+           color-space="sRGB" 
+           renderer="colorManagement: true, physicallyCorrectLights" 
+           vr-mode-ui="enabled: false" 
+           device-orientation-permission-ui="enabled: false">
+    
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+  </a-scene>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById('start-camera-btn');
       const landingScreen = document.getElementById('premium-landing-view');
       const loopVideo = document.getElementById('bg-video-loop');
-      const arContainer = document.getElementById('ar-container');
 
       loopVideo.loop = true;
 
-      // Handle custom audio activation on user touch interaction
+      // Handle custom audio activation on user interaction
       const engageAudioSystem = () => {
         loopVideo.muted = false;
         loopVideo.play().catch(err => console.log("Audio ready:", err));
@@ -86,26 +102,18 @@
       document.addEventListener('click', engageAudioSystem);
       document.addEventListener('touchstart', engageAudioSystem);
 
-      // Triggered cleanly only when user intends to open camera hardware
+      // Simple click handler to dismiss the UI overlay
       startBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         event.preventDefault();
 
-        // Step A: Stop background looping media asset and destroy the landing page layout completely
-        loopVideo.pause();
-        landingScreen.remove(); 
+        // Hide the landing screen overlay to instantly reveal the running camera feed below!
+        landingScreen.classList.add('hide-me');
 
-        // Step B: Inject a completely fresh, unconflicted AR Canvas element into the page setup
-        arContainer.innerHTML = `
-          <a-scene mindar-image="imageTargetSrc: v2-target.mind; autoStart: true; uiLoading: no; uiError: no;" 
-                   color-space="sRGB" 
-                   renderer="colorManagement: true, physicallyCorrectLights" 
-                   vr-mode-ui="enabled: false" 
-                   device-orientation-permission-ui="enabled: false">
-            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-            <a-entity mindar-image-target="targetIndex: 0"></a-entity>
-          </a-scene>
-        `;
+        // Stop the background video to save phone CPU performance
+        setTimeout(() => {
+          loopVideo.pause();
+        }, 500);
       });
     });
   </script>
