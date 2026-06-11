@@ -3,105 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>It's Sticker Time - AR Experience</title>
+  <title>Sticker Time AR</title>
 
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* Reset baseline page viewport framework */
     body, html {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #05081c;
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
-    /* --- PREMIUM LANDING OVERLAY STYLES --- */
-    #landing-wrapper {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100dvh; /* Dynamic mobile viewport height */
-      overflow: hidden;
-      z-index: 9999; /* Guarantees layout covers canvas on initialization */
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+    /* Renamed to force browser to drop old cache memory */
+    #premium-landing-view {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
     }
 
-    /* Group 1 Full-Screen Media Layer Rendering */
-    #bg-video-group1 {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* Responsively fills device bounds without stretching typography */
-      object-position: center;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
+    #bg-video-loop {
+      width: 100%; height: 100%; object-fit: cover; object-position: center; position: absolute; top: 0; left: 0; z-index: 1;
     }
 
-    /* Group 2 Interactive UI Overlay Container */
-    #action-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
+    #interactive-overlay-plane {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
     }
 
-    /* The Glossy Button Setup (Empty Text Canvas) */
     #start-camera-btn {
-      background: url('btn-bubble.png') no-repeat center;
-      background-size: contain;
-      border: none;
-      width: 280px; 
-      height: 75px;
+      background: url('btn-bubble.png') no-repeat center !important;
+      background-size: contain !important;
+      border: none !important;
+      width: 280px !important; 
+      height: 75px !important;
       cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      
-      /* Pushes the button to sit neatly inside your AE blank spot layout */
       margin-top: auto; 
       margin-bottom: 110px; 
-      
       transition: transform 0.1s ease;
       background-color: transparent !important;
-      outline: none;
+      outline: none !important;
       -webkit-tap-highlight-color: transparent;
+      
+      /* Purely structural graphic: Absolutely NO text generation allowed */
+      color: transparent !important;
+      font-size: 0px !important;
+      line-height: 0 !important;
+      text-indent: -9999px !important;
     }
 
-    /* Responsive tap feedback */
     #start-camera-btn:active {
       transform: scale(0.95);
     }
 
-    /* Transitions out landing interface seamlessly */
-    #landing-wrapper.fade-out {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
+    #premium-landing-view.hide-me {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
   </style>
 </head>
 <body>
 
-  <div id="landing-wrapper">
+  <div id="premium-landing-view">
     
-    <video id="bg-video-group1" autoplay loop muted playsinline>
+    <video id="bg-video-loop" autoplay loop muted playsinline>
       <source src="group1-main.mp4" type="video/mp4">
     </video>
 
-    <div id="action-overlay">
+    <div id="interactive-overlay-plane">
       <button id="start-camera-btn"></button>
     </div>
 
@@ -115,46 +82,50 @@
     
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <a-entity mindar-image-target="targetIndex: 0">
-      </a-entity>
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
 
   </a-scene>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById('start-camera-btn');
-      const landingWrapper = document.getElementById('landing-wrapper');
-      const bgVideo = document.getElementById('bg-video-group1');
+      const landingScreen = document.getElementById('premium-landing-view');
+      const loopVideo = document.getElementById('bg-video-loop');
 
-      bgVideo.loop = true;
+      // Loop validation
+      loopVideo.loop = true;
 
-      // WORKAROUND: Unmute the video the absolute split-second the user touches the screen
-      const unmuteAudio = () => {
-        bgVideo.muted = false;
-        // Remove listeners once activated so we don't keep firing it needlessly
-        document.removeEventListener('click', unmuteAudio);
-        document.removeEventListener('touchstart', unmuteAudio);
-      };
-      document.addEventListener('click', unmuteAudio);
-      document.addEventListener('touchstart', unmuteAudio);
-
-      startBtn.addEventListener('click', (e) => {
-        // Prevent the general screen touch listener from colliding with the button transition
-        e.stopPropagation(); 
+      // Unmute trigger sequence via screen contact interaction
+      const engageAudioSystem = () => {
+        loopVideo.muted = false;
+        loopVideo.play().catch(err => console.log("Audio waiting for harder gesture:", err));
         
-        // 1. Wake up the MindAR camera system stream
-        const sceneEl = document.querySelector('a-scene');
-        if (sceneEl && sceneEl.systems['mindar-image-system']) {
-          sceneEl.systems['mindar-image-system'].start();
+        // Kill listener nodes after initial tap validation
+        document.removeEventListener('click', engageAudioSystem);
+        document.removeEventListener('touchstart', engageAudioSystem);
+      };
+      document.addEventListener('click', engageAudioSystem);
+      document.addEventListener('touchstart', engageAudioSystem);
+
+      // Button execution sequence
+      startBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+
+        // Wake up MindAR camera stream explicitly via framework system nodes
+        const productionScene = document.querySelector('a-scene');
+        if (productionScene && productionScene.systems['mindar-image-system']) {
+          console.log("Kicking MindAR engine awake...");
+          productionScene.systems['mindar-image-system'].start();
         }
 
-        // 2. Fade out the landing interface 
-        landingWrapper.classList.add('fade-out');
+        // Drop visual overlay plane
+        landingScreen.classList.add('hide-me');
 
-        // 3. Stop the video loop audio track after it vanishes to clear the audio channels
+        // Kill audio/video rendering engines to free background RAM allocation
         setTimeout(() => {
-          bgVideo.pause();
-        }, 500);
+          loopVideo.pause();
+        }, 400);
       });
     });
   </script>
