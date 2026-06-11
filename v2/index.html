@@ -13,17 +13,9 @@
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05081c;
     }
 
-    /* Ultra-lightweight Static Landing Screen UI Layer */
+    /* Clean Static Background Definition */
     #premium-landing-view {
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100vw; 
-      height: 100dvh; 
-      overflow: hidden; 
-      z-index: 99999;
-      
-      /* Links to your brand new static background file */
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; overflow: hidden; z-index: 99999;
       background: url('bg-home.png') no-repeat center center;
       background-size: cover;
     }
@@ -33,7 +25,6 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
     }
 
-    /* The Beautiful Button Style */
     #start-camera-btn {
       background: url('btn-bubble.png') no-repeat center !important;
       background-size: contain !important;
@@ -47,8 +38,6 @@
       background-color: transparent !important;
       outline: none !important;
       -webkit-tap-highlight-color: transparent;
-      
-      /* Blocks out default HTML styling text */
       color: transparent !important;
       font-size: 0px !important;
     }
@@ -85,18 +74,17 @@
         event.stopPropagation();
         event.preventDefault();
 
-        // STEP A: Obliterate the landing screen from memory so there's zero processing lag
+        // Wipe landing view layout from phone RAM instantly
         landingScreen.remove();
 
-        // STEP B: Fire up the camera lens on 100% free system resources
+        // Spin up clean camera stream 
         const productionScene = document.querySelector('a-scene');
         if (productionScene && productionScene.systems['mindar-image-system']) {
           try {
-            // Secure direct browser video streaming hardware check
             await navigator.mediaDevices.getUserMedia({ video: true });
             productionScene.systems['mindar-image-system'].start();
           } catch (err) {
-            console.error("Camera permissions handling fallback:", err);
+            console.error("Camera startup handling:", err);
             productionScene.systems['mindar-image-system'].start();
           }
         }
