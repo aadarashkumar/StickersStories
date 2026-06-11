@@ -126,15 +126,38 @@
       const landingWrapper = document.getElementById('landing-wrapper');
       const bgVideo = document.getElementById('bg-video-group1');
 
-      // Double-insure native infinite browser looping stays active
       bgVideo.loop = true;
 
-      startBtn.addEventListener('click', () => {
-        // 1. Force the MindAR camera system to wake up and start streaming!
+      // WORKAROUND: Unmute the video the absolute split-second the user touches the screen
+      const unmuteAudio = () => {
+        bgVideo.muted = false;
+        // Remove listeners once activated so we don't keep firing it needlessly
+        document.removeEventListener('click', unmuteAudio);
+        document.removeEventListener('touchstart', unmuteAudio);
+      };
+      document.addEventListener('click', unmuteAudio);
+      document.addEventListener('touchstart', unmuteAudio);
+
+      startBtn.addEventListener('click', (e) => {
+        // Prevent the general screen touch listener from colliding with the button transition
+        e.stopPropagation(); 
+        
+        // 1. Wake up the MindAR camera system stream
         const sceneEl = document.querySelector('a-scene');
         if (sceneEl && sceneEl.systems['mindar-image-system']) {
           sceneEl.systems['mindar-image-system'].start();
         }
 
-        // 2. Trigger the smooth fade-out CSS transition overlay
-        landingWrapper.classList.add('fade-out
+        // 2. Fade out the landing interface 
+        landingWrapper.classList.add('fade-out');
+
+        // 3. Stop the video loop audio track after it vanishes to clear the audio channels
+        setTimeout(() => {
+          bgVideo.pause();
+        }, 500);
+      });
+    });
+  </script>
+
+</body>
+</html>
