@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* Reset baseline page structure */
+    /* Reset baseline page viewport framework */
     body, html {
       margin: 0;
       padding: 0;
@@ -25,17 +25,17 @@
       top: 0;
       left: 0;
       width: 100vw;
-      height: 100dvh; /* Dynamic mobile screen height */
+      height: 100dvh; /* Dynamic mobile viewport height */
       overflow: hidden;
-      z-index: 9999; /* Covers the AR camera view at startup */
+      z-index: 9999; /* Guarantees layout covers canvas on initialization */
       transition: opacity 0.5s ease, visibility 0.5s ease;
     }
 
-    /* Group 1 Scaling Setup (Full Screen) */
+    /* Group 1 Full-Screen Media Layer Rendering */
     #bg-video-group1 {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Prevents stretching on all phone aspect ratios */
+      object-fit: cover; /* Responsively fills device bounds without stretching typography */
       object-position: center;
       position: absolute;
       top: 0;
@@ -43,7 +43,7 @@
       z-index: 1;
     }
 
-    /* Group 2 Action Interactive Layer */
+    /* Group 2 Interactive UI Overlay Container */
     #action-overlay {
       position: absolute;
       top: 0;
@@ -58,37 +58,34 @@
       box-sizing: border-box;
     }
 
-    /* Natively rendering the Glossy Action Button */
+    /* The Glossy Button Setup (Empty Text Canvas) */
     #start-camera-btn {
       background: url('btn-bubble.png') no-repeat center;
       background-size: contain;
       border: none;
-      width: 280px;
+      width: 280px; 
       height: 75px;
-      color: #ffffff;
-      font-family: 'Arial Black', Gadget, sans-serif;
-      font-size: 1.3rem;
-      font-weight: 900;
-      letter-spacing: 0.5px;
       cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
-      text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.4);
       
       /* Pushes the button to sit neatly inside your AE blank spot layout */
       margin-top: auto; 
       margin-bottom: 110px; 
       
       transition: transform 0.1s ease;
+      background-color: transparent !important;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* Click down tactile behavior */
+    /* Responsive tap feedback */
     #start-camera-btn:active {
       transform: scale(0.95);
     }
 
-    /* Safe Fade out controller state */
+    /* Transitions out landing interface seamlessly */
     #landing-wrapper.fade-out {
       opacity: 0;
       visibility: hidden;
@@ -105,14 +102,12 @@
     </video>
 
     <div id="action-overlay">
-      <button id="start-camera-btn">
-        START CAMERA
-      </button>
+      <button id="start-camera-btn"></button>
     </div>
 
   </div>
 
-  <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: true;" 
+  <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false;" 
            color-space="sRGB" 
            renderer="colorManagement: true, physicallyCorrectLights" 
            vr-mode-ui="enabled: false" 
@@ -131,20 +126,15 @@
       const landingWrapper = document.getElementById('landing-wrapper');
       const bgVideo = document.getElementById('bg-video-group1');
 
-      // Double-insure native infinite browser looping loops perfectly
+      // Double-insure native infinite browser looping stays active
       bgVideo.loop = true;
 
       startBtn.addEventListener('click', () => {
-        // Kick off the sleek fade-out CSS animation layer transition
-        landingWrapper.classList.add('fade-out');
+        // 1. Force the MindAR camera system to wake up and start streaming!
+        const sceneEl = document.querySelector('a-scene');
+        if (sceneEl && sceneEl.systems['mindar-image-system']) {
+          sceneEl.systems['mindar-image-system'].start();
+        }
 
-        // Pause the looping media layer immediately after it vanishes to preserve computing processing power
-        setTimeout(() => {
-          bgVideo.pause();
-        }, 500);
-      });
-    });
-  </script>
-
-</body>
-</html>
+        // 2. Trigger the smooth fade-out CSS transition overlay
+        landingWrapper.classList.add('fade-out
